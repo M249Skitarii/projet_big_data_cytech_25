@@ -26,3 +26,21 @@ object SparkApp extends App {
 2. Dépot du rapport et du code source zippé dans cours.cyu.fr (Les accès seront bientôt ouverts)
 
 Date limite de rendu : 7 février 2026
+
+
+
+## Commands
+
+/opt/spark/bin/spark-submit \
+  --master spark://spark-master:7077 \
+  --deploy-mode client \
+  --class Branch1.SparkApp \
+  --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+  /home/root/ex02_data_ingestion_2.13-0.1.0-SNAPSHOT.jar
+
+
+## TODO 
+
+Comment Code with pyment 
+Clean code
+Clean Dashboard

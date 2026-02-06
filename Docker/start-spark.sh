@@ -1,6 +1,19 @@
 #!/bin/bash
 
 if [ "$SPARK_MODE" = "master" ]; then
+  # Installer SSH et préparer le service
+  apt-get update && \
+  apt-get install -y openssh-server && \
+  mkdir -p /var/run/sshd
+  # Définir le mot de passe root
+  echo "root:1" | chpasswd
+  # Modifier sshd_config pour autoriser root et mot de passe
+  sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+  sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  #Ouvrir le SSH
+  /usr/sbin/sshd
+
+  #SPARK
   /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master \
     --host spark-master \
     --port 7077 \

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="separateProdTestSources" value="true" />
+    <profile name="sbt 1" modules="ex01_data_retrieval,ex01_data_retrieval.main,ex01_data_retrieval.test,ex01_data_retrieval_8351,ex01_data_retrieval_8351.main,ex01_data_retrieval_8351.test,ex02_data_ingestion,ex02_data_ingestion.main,ex02_data_ingestion.test" />
+  </component>
+</project>

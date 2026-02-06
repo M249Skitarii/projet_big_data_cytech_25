@@ -1,3 +1,9 @@
+volumes:
+  spark-shared:
+  pgdata:
+  python:
+
+
 services:
   spark-master:
     build: ./docker
@@ -9,9 +15,12 @@ services:
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
       - SPARK_MASTER_URL=spark://spark-master:7077
+      - PYSPARK_PYTHON=/app/.venv/bin/python
+      - PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
     ports:
-      - "8081:8080" # Web UI
+      - "8080:8080" # Web UI
       - "7077:7077" # Spark master port
+      - "2222:22"   # SSH
     networks:
       - spark-network
     healthcheck:
@@ -19,6 +28,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    volumes:
+      - spark-shared:/home/root
+      - python:/app
 
   spark-worker-1:
     build: ./docker
@@ -34,12 +46,17 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - PYSPARK_PYTHON=/app/.venv/bin/python
+      - PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
     deploy:
       resources:
         limits:
           memory: 2G
     networks:
       - spark-network
+    volumes:
+      - spark-shared:/home/root
+      - python:/app
 
   spark-worker-2:
     build: ./docker
@@ -55,12 +72,17 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      - PYSPARK_PYTHON=/app/.venv/bin/python
+      - PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
     deploy:
       resources:
         limits:
           memory: 2G
     networks:
       - spark-network
+    volumes:
+      - spark-shared:/home/root
+      - python:/app
 
   # MinIO (S3-compatible storage)
   minio:
@@ -78,6 +100,39 @@ services:
     command: server /data --console-address ":9001"
     networks:
       - spark-network
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ma_base
+      POSTGRES_USER: mon_user
+      POSTGRES_PASSWORD: mon_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - spark-network
+
+  streamlit-page:
+    build:
+      context: Docker
+      dockerfile: Dockerfile.streamlit
+    container_name: streamlit-page
+    ports:
+      - "8501:8501"
+      - "2223:22"
+    networks:
+      - spark-network
+    volumes:
+      - spark-shared:/home/root
+      - python:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   spark-network:

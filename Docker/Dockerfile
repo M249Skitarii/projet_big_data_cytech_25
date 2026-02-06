@@ -1,7 +1,7 @@
 # This Dockerfile is taken from https://github.com/mvillarrealb/docker-spark-cluster/blob/master/docker-compose.yml
 # and updated to install the Scala 2.13 version of Spark 3.2.0
 
-FROM eclipse-temurin:21-jre-jammy as builder
+FROM eclipse-temurin:17-jre-jammy as builder
 
 # Add Dependencies for PySpark
 
@@ -19,7 +19,35 @@ RUN wget --no-verbose -O apache-spark.tgz "https://archive.apache.org/dist/spark
 && rm apache-spark.tgz
 
 
+# PostgreSQL JDBC driver
+RUN curl -fSL https://repo1.maven.org/maven2/org/postgresql/postgresql/42.7.4/postgresql-42.7.4.jar \
+      -o ${SPARK_HOME}/jars/postgresql-42.7.4.jar
+
+#AWS3
+RUN curl -fSL https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar \
+      -o ${SPARK_HOME}/jars/hadoop-aws-3.3.4.jar \
+ && curl -fSL https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar \
+      -o ${SPARK_HOME}/jars/aws-java-sdk-bundle-1.12.262.jar
+
 FROM builder as apache-spark
+
+# Python runtime minimal 3.11 pour 
+RUN apt-get update && apt-get install -y \
+    python3.11 python3.11-venv python3.11-distutils python3-pip \
+ && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
+ && rm -rf /var/lib/apt/lists/*
+
+
+WORKDIR /app
+
+# Installer uv dans le builder
+RUN pip install --no-cache-dir uv
+
+# Copier uniquement les fichiers de dépendances
+COPY pyproject.toml uv.lock* ./
+
+# Créer le venv et installer les deps
+RUN uv sync --frozen --no-dev
 
 WORKDIR /opt/spark
 
@@ -40,5 +68,8 @@ ln -sf /dev/stdout $SPARK_MASTER_LOG && \
 ln -sf /dev/stdout $SPARK_WORKER_LOG
 
 COPY start-spark.sh /
+
+# Exposer le port SSH
+EXPOSE 22
 
 CMD ["/bin/bash", "/start-spark.sh"]

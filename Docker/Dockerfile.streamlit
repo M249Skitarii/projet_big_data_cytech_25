@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+# Installer uv dans le builder
+RUN pip install --no-cache-dir uv
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-21-jre-headless \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+ENV JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+
+# Copier uniquement les fichiers de dépendances
+COPY pyproject.toml uv.lock* ./
+
+# Créer le venv et installer les deps
+RUN uv sync --frozen --no-dev
+
+RUN  apt-get update && \
+  apt-get install -y openssh-server && \
+  mkdir -p /var/run/sshd && \
+  # Définir le mot de passe root
+  echo "root:1" | chpasswd &&\
+  # Modifier sshd_config pour autoriser root et mot de passe
+  sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+  sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+  #Ouvrir le SSH
+EXPOSE 8501 22
+CMD  /usr/sbin/sshd && tail -f /dev/null
