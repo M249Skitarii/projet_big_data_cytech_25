@@ -41,7 +41,7 @@ validate_nyc_taxi_df(df)
 # ---------------- Feature engineering ----------------
 df = df.withColumn("pickup_hour", hour(col("tpep_pickup_datetime"))) \
        .withColumn("pickup_dayofweek", dayofweek(col("tpep_pickup_datetime")))
-
+train_df, test_df = df.randomSplit([0.8, 0.2], seed=42)
 categorical_cols = [
     'RatecodeID',
     'payment_type',
@@ -86,10 +86,9 @@ gbt = GBTRegressor(
 
 # ---------------- Pipeline complet ----------------
 pipeline = Pipeline(stages=indexers + encoders + [assembler, gbt])
-pipeline_model = pipeline.fit(df)
-
+pipeline_model = pipeline.fit(train_df)
 # ---------------- Évaluation ----------------
-predictions = pipeline_model.transform(df)
+predictions = pipeline_model.transform(test_df)
 evaluator = RegressionEvaluator(
     labelCol=target_col,
     predictionCol="prediction",

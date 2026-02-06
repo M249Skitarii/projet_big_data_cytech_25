@@ -58,3 +58,6 @@ hadoop
 
 ### MODELS ###
 ex05_ml_prediction_service/model/*
+
+## PYTHON ##
+*/__pycache__/*

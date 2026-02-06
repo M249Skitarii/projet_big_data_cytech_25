@@ -44,6 +44,12 @@ day = stl.slider(
 vendor = stl.slider(
     "1= Creative Mobile Technologies, LLC; 2= VeriFone Inc",
     1, 2, 1)
+pickup = stl.slider(
+    "pickup zone",
+    1, 1, 265)
+dropout = stl.slider(
+    "dropout zone",
+    1, 5, 265)
 
 if stl.button("Prédire"):
     input_df = spark.createDataFrame([{
@@ -52,10 +58,10 @@ if stl.button("Prédire"):
         "pickup_hour": int(hour),
         "pickup_dayofweek": int(day),
         "VendorID": int(vendor),
-        "RatecodeID": "1",
-        "payment_type": "1",
-        "PULocationID": "138",
-        "DOLocationID": "237",
+        "RatecodeID": 1,
+        "payment_type": 1,
+        "PULocationID": int(pickup),
+        "DOLocationID": int(dropout),
         "congestion_surcharge": 0.0,
         "Airport_fee": 0.0,
         "cbd_congestion_fee": 0.0

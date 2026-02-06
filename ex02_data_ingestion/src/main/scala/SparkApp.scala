@@ -3,16 +3,19 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 import java.util.Properties
 
-// Objet principal
+/**
+ * Application Spark de validation, transformation et ingestion
+ * des données NYC Taxi depuis MinIO vers un Data Warehouse.
+ */
 object SparkApp extends App {
   // SparkSession configuré pour Minio
   val spark = SparkSession.builder()
-    .appName("SparkApp")
+    .appName("Data_Processing")
     .config("spark.hadoop.fs.s3a.access.key", "minio")
     .config("spark.hadoop.fs.s3a.secret.key", "minio123")
     .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
     .config("spark.hadoop.fs.s3a.path.style.access", "true")
-    .config("spark.hadoop.fs.s3a.connection.ssl.enable", "false")
+    .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
     .getOrCreate()
   import spark.implicits._
 
@@ -73,7 +76,7 @@ object SparkApp extends App {
 
   // --- BRANCHE 1 : Export pour ML Engineers (MinIO) ---
   println(">>> Branche 1 : Écriture du Parquet validé pour le ML...")
-  val dfInvalid = df.except(dfValid)
+  val dfInvalid = df.filter(!validCondition)
 
   println("Données valides :")
   dfValid.show(5)
@@ -85,18 +88,6 @@ object SparkApp extends App {
   import org.apache.hadoop.fs.{FileSystem, Path}
 
   val outputPath = "s3a://nyc-validated-b1/yellow_tripdata_2025-11-validated.parquet"
-
-  val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  val bucketPath = new Path("s3a://nyc-validated-b1")
-
-  if (!fs.exists(bucketPath)) {
-    fs.mkdirs(bucketPath)   // crée le bucket si il n'existe pas
-  }
-
-  dfValid.write
-    .mode("overwrite")
-    .parquet(outputPath)
-
   dfValid.write
     .mode("overwrite")
     .parquet(outputPath)

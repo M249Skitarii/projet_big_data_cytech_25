@@ -51,8 +51,8 @@ def validate_nyc_taxi_df(df):
 
     # Cohérence temporelle
     assert_no_invalid(
-        (year(col("pickup_datetime")) != 2025) |
-        (~month(col("pickup_datetime")).isin(9, 10, 11)) |
+        (year(col("tpep_pickup_datetime")) != 2025) |
+        (~month(col("tpep_pickup_datetime")).isin(9, 10, 11)) |
         (col("tpep_dropoff_datetime") <= col("tpep_pickup_datetime")),
         "Chronologie ou période invalide",
         df
