@@ -58,6 +58,7 @@ data_visualisation.py :
 Ex05 prediction streamlit_page.py : 
 <img width="694" height="695" alt="image" src="https://github.com/user-attachments/assets/79bd92e8-30aa-4e26-bdf2-865df7ce1fc9" />
 
-
+Ex06 Airflow pipeline flow
+![image](https://github.com/user-attachments/assets/2ac5c1ac-e93d-4140-a707-28edfd739453)
 
 
