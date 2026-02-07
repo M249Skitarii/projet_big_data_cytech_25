@@ -2,6 +2,9 @@ volumes:
   spark-shared:
   pgdata:
   python:
+  airflow-logs:
+  airflow-plugins:
+  airflow-dags:
 
 
 services:
@@ -20,6 +23,7 @@ services:
     ports:
       - "8080:8080" # Web UI
       - "7077:7077" # Spark master port
+      - "4040:4040" # Spark Application UI
       - "2222:22"   # SSH
     networks:
       - spark-network
@@ -133,6 +137,49 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  airflow:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.airflow
+    container_name: airflow
+    depends_on:
+      - postgres
+      - minio
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://mon_user:mon_password@postgres:5432/ma_base
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+      - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=true
+      - AIRFLOW_UID=50000
+      - AIRFLOW_GID=0
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+    volumes:
+      - airflow-dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+      - airflow-plugins:/opt/airflow/plugins
+      - ./ex01_data_retrieval:/opt/airflow/ex01_data_retrieval
+      - ./ex02_data_ingestion:/opt/airflow/ex02_data_ingestion
+      - ./ex03_sql_table_creation:/opt/airflow/ex03_sql_table_creation
+      - ./ex05_ml_prediction_service:/opt/airflow/ex05_ml_prediction_service
+      - spark-shared:/home/root
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8082:8080"
+    networks:
+      - spark-network
+    command: standalone
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 networks:
   spark-network:

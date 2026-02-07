@@ -21,7 +21,8 @@ engine = sa.create_engine(
 # -----------------------------
 with engine.connect() as conn:
     boroughs = pd.read_sql(
-        "SELECT DISTINCT borough_name FROM dim_zones ORDER BY borough_name", conn
+        "SELECT DISTINCT borough_name FROM dim_zones ORDER BY borough_name",
+        conn
     )
     vendors = pd.read_sql(
         "SELECT DISTINCT vendor_id FROM fact_trips ORDER BY vendor_id", conn

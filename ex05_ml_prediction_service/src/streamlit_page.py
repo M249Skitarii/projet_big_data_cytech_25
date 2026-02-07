@@ -1,6 +1,8 @@
 
 import os
 import streamlit as stl
+
+# flake8 not respected because we need the path before the import
 os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-21-openjdk-amd64"
 os.environ["PATH"] = "/usr/lib/jvm/java-21-openjdk-amd64/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 from pyspark.sql import SparkSession
@@ -10,6 +12,7 @@ from test.py_test import validate_streamlit_input
 # Configuration environnement
 os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-21-openjdk-amd64"
 
+# flake8 not respected because it's a decorator
 @stl.cache_resource
 def load_all():
     spark = (

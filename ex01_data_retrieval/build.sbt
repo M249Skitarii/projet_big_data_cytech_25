@@ -7,7 +7,6 @@ lazy val root = (project in file("."))
     name := "ex01_data_retrieval",
   )
 libraryDependencies ++= Seq(
-  // Dépendances pour AWS S3 (indispensables pour votre code)
   "software.amazon.awssdk" % "s3"      % awsVersion,
   "software.amazon.awssdk" % "auth"    % awsVersion,
   "software.amazon.awssdk" % "regions" % awsVersion,

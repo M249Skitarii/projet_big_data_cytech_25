@@ -1,21 +1,58 @@
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3Client
+import software.amazon.awssdk.services.s3.model.{CreateBucketRequest, HeadBucketRequest, NoSuchBucketException}
+import software.amazon.awssdk.services.s3.S3Configuration
 
 import java.util.Properties
-
 /**
  * Application Spark de validation, transformation et ingestion
  * des données NYC Taxi depuis MinIO vers un Data Warehouse.
  */
 object SparkApp extends App {
+  // Endpoint configurable via variable d'environnement
+  val minioEndpoint = sys.env.getOrElse("MINIO_ENDPOINT", "localhost:9000")
+  println(s"Utilisation de l'endpoint MinIO: $minioEndpoint")
+
+  // Créer les buckets MinIO s'ils n'existent pas
+  val s3Client = S3Client.builder()
+    .endpointOverride(java.net.URI.create(s"http://$minioEndpoint"))
+    .serviceConfiguration(S3Configuration.builder()
+      .pathStyleAccessEnabled(true)
+      .build())
+    .credentialsProvider(
+      StaticCredentialsProvider.create(
+        AwsBasicCredentials.create("minio", "minio123")
+      )
+    )
+    .region(Region.US_EAST_1)
+    .build()
+
+  // Créer les buckets nécessaires
+  val bucketsToCreate = List("nyc-raw", "nyc-validated-b1")
+  bucketsToCreate.foreach { bucketName =>
+    try {
+      s3Client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build())
+      println(s"Le bucket '$bucketName' existe déjà.")
+    } catch {
+      case _: NoSuchBucketException =>
+        println(s"Création du bucket '$bucketName'...")
+        s3Client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build())
+        println(s"Bucket '$bucketName' créé avec succès.")
+    }
+  }
+  s3Client.close()
+
   // SparkSession configuré pour Minio
   val spark = SparkSession.builder()
-    .appName("Data_Processing")
+    .appName("SparkApp")
     .config("spark.hadoop.fs.s3a.access.key", "minio")
     .config("spark.hadoop.fs.s3a.secret.key", "minio123")
-    .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000")
+    .config("spark.hadoop.fs.s3a.endpoint", s"http://$minioEndpoint")
     .config("spark.hadoop.fs.s3a.path.style.access", "true")
-    .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+    .config("spark.hadoop.fs.s3a.connection.ssl.enable", "false")
     .getOrCreate()
   import spark.implicits._
 
@@ -76,7 +113,7 @@ object SparkApp extends App {
 
   // --- BRANCHE 1 : Export pour ML Engineers (MinIO) ---
   println(">>> Branche 1 : Écriture du Parquet validé pour le ML...")
-  val dfInvalid = df.filter(!validCondition)
+  val dfInvalid = df.except(dfValid)
 
   println("Données valides :")
   dfValid.show(5)
@@ -85,9 +122,8 @@ object SparkApp extends App {
   dfInvalid.show(5)
   println(s"Nombre de lignes : ${dfInvalid.count()}")
 
-  import org.apache.hadoop.fs.{FileSystem, Path}
-
   val outputPath = "s3a://nyc-validated-b1/yellow_tripdata_2025-11-validated.parquet"
+
   dfValid.write
     .mode("overwrite")
     .parquet(outputPath)
