@@ -47,10 +47,10 @@ vendor = stl.slider(
     1, 2, 1)
 pickup = stl.slider(
     "pickup zone",
-    1, 1, 265)
+    1, 265, 1)
 dropout = stl.slider(
     "dropout zone",
-    1, 5, 265)
+    1, 265, 5)
 
 if stl.button("Prédire"):
     input_df = spark.createDataFrame([{
