@@ -201,7 +201,6 @@ task_ex05_train_model = BashOperator(
         --packages org.apache.hadoop:hadoop-aws:3.3.4,\
 com.amazonaws:aws-java-sdk-bundle:1.12.262 \
         /home/root/src/model.py
-    "
     """,
     dag=dag,
 )
