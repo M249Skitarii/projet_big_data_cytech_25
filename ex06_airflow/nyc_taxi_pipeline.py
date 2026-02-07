@@ -90,11 +90,11 @@ task_ex01_download = BashOperator(
         --master spark://spark-master:7077 \
         --deploy-mode client \
         --class DirectDownload \
-        --packages org.apache.hadoop:hadoop-aws:3.3.4, \
-            software.amazon.awssdk:s3:2.17.100, \
-            software.amazon.awssdk:aws-core:2.17.100, \
-            software.amazon.awssdk:auth:2.17.100, \
-            software.amazon.awssdk:regions:2.17.100 \
+        --packages org.apache.hadoop:hadoop-aws:3.3.4,\
+software.amazon.awssdk:s3:2.17.100,\
+software.amazon.awssdk:aws-core:2.17.100,\
+software.amazon.awssdk:auth:2.17.100,\
+software.amazon.awssdk:regions:2.17.100 \
         /home/root/ex01_data_retrieval_2.13-0.1.0-SNAPSHOT.jar
     """,
     dag=dag,
@@ -133,15 +133,16 @@ task_ex02_copy_jar = BashOperator(
 task_ex02_spark_submit = BashOperator(
     task_id='ex02_spark_ingestion',
     bash_command="""
-    docker exec -e MINIO_ENDPOINT=minio:9000 spark-master /opt/spark/bin/spark-submit \
+    docker exec -e MINIO_ENDPOINT=minio:9000 \
+    spark-master /opt/spark/bin/spark-submit \
         --master spark://spark-master:7077 \
         --deploy-mode client \
         --class SparkApp \
-        --packages org.apache.hadoop:hadoop-aws:3.3.4, \
-        software.amazon.awssdk:s3:2.17.100, \
-        software.amazon.awssdk:aws-core:2.17.100, \
-        software.amazon.awssdk:auth:2.17.100, \
-        software.amazon.awssdk:regions:2.17.100 \
+        --packages org.apache.hadoop:hadoop-aws:3.3.4,\
+software.amazon.awssdk:s3:2.17.100,\
+software.amazon.awssdk:aws-core:2.17.100,\
+software.amazon.awssdk:auth:2.17.100,\
+software.amazon.awssdk:regions:2.17.100 \
         /home/root/ex02_data_ingestion_2.13-0.1.0-SNAPSHOT.jar
     """,
     dag=dag,
@@ -156,7 +157,8 @@ task_ex03_create_tables = BashOperator(
     task_id='ex03_create_sql_tables',
     bash_command="""
     docker cp /opt/airflow/ex03_sql_table_creation postgres_db:/tmp/
-    docker exec postgres_db psql -U mon_user -d ma_base -f /tmp/ex03_sql_table_creation/creation.sql
+    docker exec postgres_db psql -U mon_user \
+        -d ma_base -f /tmp/ex03_sql_table_creation/creation.sql
     """,
     dag=dag,
 )
@@ -164,7 +166,8 @@ task_ex03_create_tables = BashOperator(
 task_ex03_insert_data = BashOperator(
     task_id='ex03_insert_reference_data',
     bash_command="""
-    docker exec postgres_db psql -U mon_user -d ma_base -f /tmp/ex03_sql_table_creation/insertion.sql
+    docker exec postgres_db psql -U mon_user \
+        -d ma_base -f /tmp/ex03_sql_table_creation/insertion.sql
     """,
     dag=dag,
 )
@@ -183,7 +186,8 @@ check_ml = BranchPythonOperator(
 task_ex05_copy_code = BashOperator(
     task_id='ex05_copy_ml_code',
     bash_command="""
-    docker cp /opt/airflow/ex05_ml_prediction_service/src spark-master:/home/root/
+    docker cp /opt/airflow/ex05_ml_prediction_service/src \
+        spark-master:/home/root/
     """,
     dag=dag,
 )
@@ -191,13 +195,17 @@ task_ex05_copy_code = BashOperator(
 task_ex05_train_model = BashOperator(
     task_id='ex05_train_ml_model',
     bash_command="""
-    docker exec -e MINIO_ENDPOINT=minio:9000 spark-master /opt/spark/bin/spark-submit \
+    docker exec -e MINIO_ENDPOINT=minio:9000 \
+        spark-master /opt/spark/bin/spark-submit \
         --master spark://spark-master:7077 \
-        --packages org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 \
+        --packages org.apache.hadoop:hadoop-aws:3.3.4,\
+com.amazonaws:aws-java-sdk-bundle:1.12.262 \
         /home/root/src/model.py
+    "
     """,
     dag=dag,
 )
+
 
 skip_ml_training = DummyOperator(task_id='skip_ml_training', dag=dag)
 

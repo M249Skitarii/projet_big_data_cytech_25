@@ -9,8 +9,6 @@ from pyspark.sql import SparkSession
 from pyspark.ml import PipelineModel
 from test.py_test import validate_streamlit_input
 
-# Configuration environnement
-os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-21-openjdk-amd64"
 
 # flake8 not respected because it's a decorator
 @stl.cache_resource

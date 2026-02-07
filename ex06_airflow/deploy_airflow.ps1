@@ -5,20 +5,29 @@ $ErrorActionPreference = "Stop"
 $projectDir = Split-Path -Parent $PSScriptRoot
 Write-Host "Demarrage du service Airflow..." -ForegroundColor Yellow
 
-# # Arrêt des services existants
-# Write-Host "Arret des services existants..." -ForegroundColor Yellow
-# docker compose down
+# -------------- REBUILD DOCKER COMPOSE -----------------
+#Commentez cette partie si les container sont déjà bien montés
 
-# # Reconstruction des images Docker
-# Write-Host "Reconstruction des images Docker (avec boto3)..." -ForegroundColor Yellow
-# docker compose build --no-cache
 
-# # Démarrage des services
-# Write-Host "Demarrage des services avec Airflow..." -ForegroundColor Yellow
-# docker compose up -d
+# Arrêt des services existants
+Write-Host "Arret des services existants..." -ForegroundColor Yellow
+docker compose down
 
-# Write-Host "Attente du demarrage d'Airflow (60 secondes)..." -ForegroundColor Yellow
-# Start-Sleep -Seconds 60
+# Reconstruction des images Docker
+Write-Host "Reconstruction des images Docker (avec boto3)..." -ForegroundColor Yellow
+docker compose build --no-cache
+
+# Démarrage des services
+Write-Host "Demarrage des services avec Airflow..." -ForegroundColor Yellow
+docker compose up -d
+
+Write-Host "Attente du demarrage d'Airflow (60 secondes)..." -ForegroundColor Yellow
+Start-Sleep -Seconds 60
+
+#---------------------------------------------------------
+
+
+
 
 # Copier le DAG vers le conteneur Airflow
 Write-Host "Copie du DAG vers Airflow..." -ForegroundColor Yellow
